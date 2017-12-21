@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Промышленная карта РФ</title>
+	<meta charset="utf-8">
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.4.1/css/ol.css" type="text/css">
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <script src="https://openlayers.org/en/v4.4.1/build/ol.js"></script>
+	<link rel="stylesheet" href="css/ol3-layerswitcher.css" />
+	<script src="js/ol3-layerswitcher.js"></script>
+	<link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <style type="text/css">
+		.container{
+			margin-top:8px;
+		}
+
+		.filter-col{
+			padding-left:10px;
+			padding-right:10px;
+		}
+		.filter-metro{
+			padding-left:10px;
+			padding-right:10px;
+			opacity: 0.6;
+			bottom: 0;
+			position: relative;
+		}
+		.filter-builder{
+			padding-left:10px;
+			padding-right:10px;
+			font-color: rgba(226, 114, 91, 0.6); 
+			bottom: 0;
+			position: relative;
+		}
+		.filter-price{
+			padding-left:10px;
+			padding-right:10px;
+			font-color: rgba(226, 114, 91, 0.6); 
+			bottom: 0;
+			position: relative;
+		}
+		.filter-address{
+			padding-left:10px;
+			padding-right:10px;
+			opacity: 0.6;
+			bottom: 0;
+			position: relative;
+			font-size: 12px;
+		}
+		
+    </style>
+	<style type="text/css">
+		body{
+			background-image: url("background.jpg");
+			bckground-repeat: no-repeat;
+			background-position: right top;
+			background-attachment: fixed;
+		}
+		.gallery-title
+		{
+			font-size: 36px;
+			color: #42B32F;
+			text-align: center;
+			font-weight: 500;
+			margin-bottom: 70px;
+		}
+		.gallery-title:after {
+			content: "";
+			position: absolute;
+			width: 7.5%;
+			left: 46.5%;
+			height: 45px;
+			border-bottom: 1px solid #5e5e5e;
+		}
+		.filter-button
+		{
+			font-size: 18px;
+			border: 1px solid #42B32F;
+			border-radius: 5px;
+			text-align: center;
+			color: #42B32F;
+			margin-bottom: 30px;
+
+		}
+		.filter-button:hover
+		{
+			font-size: 18px;
+			border: 1px solid #42B32F;
+			border-radius: 5px;
+			text-align: center;
+			color: #ffffff;
+			background-color: #42B32F;
+
+		}
+		.btn-default:active .filter-button:active
+		{
+			background-color: #42B32F;
+			color: white;
+		}
+
+		.port-image
+		{
+			width: 100%;
+		}
+		.row-custom{
+		margin-left: auto;
+			margin-right: auto;
+		}
+		.gallery_product
+		{
+			margin-bottom: 30px;
+			margin-left: 2%;
+			margin-right: 1%;
+			padding-top: 15px;
+			height: 365px;
+			width: 30%;
+			background: rgba(255, 255, 255, 0.71);
+			border: 1px solid #e3e3e3;
+			border-radius: 7px;
+			-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+		}
+		.gallery_product:hover
+		{
+			background: rgba(140, 255, 255, 0.51);
+		}
+		.gallery_product_info
+		{
+
+			height: 365px;
+			width: 100%;
+			background: rgba(255, 255, 255, 0.71);
+			border: 1px solid #e3e3e3;
+			border-radius: 7px;
+			-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+		}
+    </style>
+	
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+		var buildermap = {};
+		var metromap = {};
+		function range2price(str){
+			var vals = str.replace('[',"").replace(')',"").split(',');
+			return "Цена от " +vals[0]+" до "+vals[1]+" руб. за м²";
+		}
+		function put2gallery(data){
+			$('#gallery').empty();
+			$.each(data, function(key, value) {
+					
+					$.get( "/api/realty?id=eq."+value.get('id'), function( data ) {
+						var mainDiv = $('<div class="gallery_product col-lg-4 col-md-4 col-sm-4 col-xs-6 filter "></div>');
+						var label = $('<label class="filter-col" style="margin-right:0;"></label>');
+						label.text(data[0].name);
+						var img = $('<img class="img-responsive"/>');
+						var metro = $('<label class="filter-metro"></label>');
+						metro.text(metromap[data[0].id_metro]);
+							
+						var builder = $('<label class="filter-builder"></label>');
+						builder.text(buildermap[data[0].id_builder]);
+						
+						var price = $('<label class="filter-price"></label>');
+						builder.text(range2price(data[0].pricerange));	
+						
+						var address = $('<label class="filter-address"></label>');
+						address.text(data[0].address);
+							
+						img.attr("src","http:"+data[0].image.split(' ')[0]);
+						mainDiv.append(img).append(label).append($('<br>')).append(metro).append($('<br>')).append(builder).append($('<br>')).append(price).append($('<br>')).append(address);
+						$('#gallery').append(mainDiv);
+						
+					}, "json" );
+					
+				});
+		}
+        window.alert = function(){};
+        var defaultCSS = document.getElementById('bootstrap-css');
+        function changeCSS(css){
+            if(css) $('head > link').filter(':first').replaceWith('<link rel="stylesheet" href="'+ css +'" type="text/css" />'); 
+            else $('head > link').filter(':first').replaceWith(defaultCSS); 
+        }
+		
+    </script>
+	<style>
+		#map {
+			position: relative;
+			padding: 13px;
+			background: rgba(255, 255, 255, 0.71);
+			border: 1px solid #e3e3e3;
+			border-radius: 7px;
+			-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+		}
+		#info {
+			position: absolute;
+			z-index: 10;
+			background-color: white;
+			border: 1px solid #ccc;
+			color: black;
+			padding: 5px;
+			font-size: 18px;
+			top: -10em;
+			
+			overflow: auto;
+		}
+		.ol-dragbox {
+			background-color: rgba(255,255,255,0.4);
+			border-color: rgba(100,150,0,1);
+		}
+		.hdr {
+			font-family: Verdana;
+			font-size: 3em;
+			font-weight: bold;
+			color: rgba(117,151,177,1);
+			letter-spacing: -0.11em;
+		 
+		}
+		 
+		.hdr div {
+			display: inline-block;
+			color: #FF0011;
+		}
+	</style>
+  </head>
+  
+  <body>
+	<div class="container">
+		<div class="hdr">
+			<span>П</span><span>р</span><span>о</span><span>м</span><span>ы</span><span>ш</span><span>л</span><span>е</span><span>н</span><span>н</span><span>а</span><span>я </span><div><span>к</span><span>а</span><span>р</span><span>т</span><span>а</span><span> </span><span>Р</span><span>Ф</span></div>
+		</div>
+	</div>
+	
+    <div id="map" class="container"></div>
+    <script>
+	var controls = [
+                new ol.control.Attribution(),
+                new ol.control.MousePosition({
+                    undefinedHTML: 'outside',
+                    projection: 'EPSG:4326',
+                    coordinateFormat: function(coordinate) {
+                        return ol.coordinate.format(coordinate, '{x}, {y}', 4);
+                    }
+				}),
+
+                new ol.control.Rotate({
+                    autoHide: false
+                }),
+                new ol.control.ScaleLine(),
+                new ol.control.Zoom(),
+                new ol.control.FullScreen()
+            ];	
+
+	var image = new ol.style.Circle({
+		radius: 5,
+		fill: new ol.style.Fill({
+			color: 'rgba(255, 255, 0, 0.5)'
+		}),
+		stroke: new ol.style.Stroke({color: 'red', width: 1})
+	});
+
+	var styles = {
+		'Point': new ol.style.Style({
+			image: image
+		}),
+		'LineString': new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'green',
+            width: 1
+          })
+        }),
+        'MultiLineString': new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'green',
+            width: 1
+          })
+        }),
+        'MultiPoint': new ol.style.Style({
+          image: image
+        }),
+        'MultiPolygon': new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'yellow',
+            width: 1
+          }),
+          fill: new ol.style.Fill({
+            color: 'rgba(255, 255, 0, 0.1)'
+          })
+        }),
+        'Polygon': new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'blue',
+            lineDash: [4],
+            width: 3
+          }),
+          fill: new ol.style.Fill({
+            color: 'rgba(0, 0, 255, 0.1)'
+          })
+        }),
+        'GeometryCollection': new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'magenta',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'magenta'
+          }),
+          image: new ol.style.Circle({
+            radius: 10,
+            fill: null,
+            stroke: new ol.style.Stroke({
+              color: 'magenta'
+            })
+          })
+        }),
+        'Circle': new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'red',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'rgba(255,0,0,0.2)'
+          })
+        })
+      };
+	var styleFunction = function(feature) {
+		var item5 = feature.getProperties()['item5'];
+		if(typeof item5 === 'undefined'){
+			return styles[feature.getGeometry().getType()];
+		}
+		if(item5.length > 2){
+			item5 = item5.substr(0,2);
+			return new ol.style.Style({
+				image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+				  //color: '#8959A8',
+				  crossOrigin: 'anonymous',
+				  src: 'icon/'+item5+'_color.png',
+				  scale : 0.5 
+				  //imgSize: [16,16]
+				}))
+			  })
+		}else{
+			return new ol.style.Style({
+				image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+				  //color: '#8959A8',
+				  crossOrigin: 'anonymous',
+				  src: 'icon/xx_color.png',
+				  scale : 0.5 
+				  //imgSize: [16,16]
+				}))
+			  })
+		}
+		return styles[feature.getGeometry().getType()];
+	};
+	
+	var vectorSource = new ol.source.Vector({
+		format: new ol.format.GeoJSON()/*,
+        url: function(extent) {
+		
+          return 'https://gs.gismart.ru/geoserver/mainMap/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mainMap:product&maxFeatures=500&' +
+              'outputFormat=application/json&srsname=EPSG:3857&' +
+              'bbox=' + extent.join(',')+',EPSG:3857';
+        },
+        strategy: ol.loadingstrategy.bbox*/
+	});
+	var vectorSource2 = new ol.source.Vector({
+		format: new ol.format.GeoJSON(),
+        url: function(extent) {
+			vectorSource2.clear();
+          return 'https://gs.gismart.ru/geoserver2/mainMap/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mainMap:product&maxFeatures=500&' +
+              'outputFormat=application/json&srsname=EPSG:3857&' +
+              'bbox=' + extent.join(',')+',EPSG:3857';
+        },
+        strategy: ol.loadingstrategy.bbox
+	});
+	var vector = new ol.layer.Vector({
+		source: vectorSource,
+		style: styleFunction
+	});
+	var vector2 = new ol.layer.Vector({
+		'title': 'Промышленность',
+		source: vectorSource2,
+		style: styleFunction
+	});
+	var drawingSource = new ol.source.Vector({
+		useSpatialIndex : false
+	});
+
+	/* Add drawing layer */
+	var drawingLayer = new ol.layer.Vector({
+		'title': 'Зона поиска',
+		source: drawingSource
+	});
+	var RegionsLayer = new ol.layer.Vector({
+		title: 'Регионы',
+		source: new ol.source.Vector({
+			format: new ol.format.GeoJSON(),
+			projection : 'EPSG:3857',
+			url: 'Regions.geojson'
+		}),
+		style: styleFunction
+	})
+	var layers = [
+			
+            new ol.layer.Group({
+                'title': 'Подложки',
+                layers: [
+                    new ol.layer.Group({
+                        title: 'Water color with labels',
+                        type: 'base',
+                        combine: true,
+                        visible: false,
+                        layers: [
+                            new ol.layer.Tile({
+                                source: new ol.source.Stamen({
+                                    layer: 'watercolor'
+                                })
+                            }),
+                            new ol.layer.Tile({
+                                source: new ol.source.Stamen({
+                                    layer: 'terrain-labels'
+                                })
+                            })
+                        ]
+                    }),
+                    new ol.layer.Tile({
+                        title: 'Water color',
+                        type: 'base',
+                        visible: false,
+                        source: new ol.source.Stamen({
+                            layer: 'watercolor'
+                        })
+                    }),
+					new ol.layer.Tile({
+						title: 'GoogleMap', type: 'base',
+						source: new ol.source.TileImage({url: 'http://maps.google.com/maps/vt?pb=!1m5!1m4!1i{z}!2i{x}!3i{y}!4i256!2m3!1e0!2sm!3i375060738!3m9!2spl!3sUS!5e18!12m1!1e47!12m3!1e37!2m1!1ssmartmaps!4e0'})
+					}),
+					new ol.layer.Tile({title: 'GoogleSat', type: 'base', source: new ol.source.TileImage({ url: 'http://khm{0-3}.googleapis.com/kh?v=742&hl=pl&&x={x}&y={y}&z={z}' })}),
+					new ol.layer.Tile({
+                        title: 'OSM',
+                        type: 'base',
+                        visible: true,
+                        source: new ol.source.OSM()
+                    })
+                ]
+            }),
+			new ol.layer.Group({
+                title: 'Слои',
+                layers: [
+					drawingLayer,
+					vector,
+					vector2,
+					RegionsLayer
+                ]
+            })
+            
+        ];
+		
+      var map = new ol.Map({
+        layers: layers,
+        target: document.getElementById('map'),
+		controls: controls,
+        view: new ol.View({
+          maxZoom: 18,
+          center: [4184699.16675419, 7536499.04772966],
+          zoom: 4
+        })
+      });
+
+
+		/* Add drawing vector source */
+	
+	//map.addLayer(drawingLayer);
+
+	var draw;
+	var modify;
+	var listener;
+
+	draw = new ol.interaction.Draw({
+		source : drawingSource,
+		type : 'Polygon',
+		//only draw when Ctrl is pressed.
+		condition : ol.events.condition.platformModifierKeyOnly
+	});
+	map.addInteraction(draw);
+
+	draw.on('drawstart',function(event){
+		drawingSource.clear();
+	},this);
+
+	draw.on('drawend', function(event) {
+		sketch = null;
+		polygon = event.feature.getGeometry();
+		var featureRequest = new ol.format.WFS().writeGetFeature({
+			srsName: 'EPSG:3857',
+			featureNS: 'http://www.opengis.net',
+			featurePrefix: 'mainMap',
+			featureTypes: ['product'],
+			outputFormat: 'application/json',
+			filter: ol.format.filter.intersects('way', polygon, 'EPSG:3857')
+		});
+		console.log(new XMLSerializer().serializeToString(featureRequest));
+      // then post the request and add the received features to a layer
+		vectorSource.clear();
+		fetch('https://gs.gismart.ru/geoserver2/mainMap/ows', {
+			method: 'POST',
+			body: new XMLSerializer().serializeToString(featureRequest)
+		}).then(function(response) {
+			return response.json();
+		}).then(function(json) {
+			var features = new ol.format.GeoJSON().readFeatures(json);
+			vectorSource.addFeatures(features);
+			//put2gallery(features);
+			map.getView().fit(vectorSource.getExtent());
+		});
+	});
+
+	var info = document.createElement("div");
+	info.setAttribute("class", "gallery_product col-lg-4 col-md-4 col-sm-4 col-xs-6 filter");
+	info.setAttribute("id", "info");
+	
+	var target = document.getElementById('map');
+	target.appendChild(info);
+	function displayStatisticaInfo(feature){
+		sketch = null;
+		var polygon = feature.getGeometry();
+		var featureRequest = new ol.format.WFS().writeGetFeature({
+			srsName: 'EPSG:3857',
+			featureNS: 'http://www.opengis.net',
+			featurePrefix: 'mainMap',
+			featureTypes: ['product'],
+			outputFormat: 'application/json',
+			filter: ol.format.filter.intersects('way', polygon, 'EPSG:3857')
+		});
+		console.log(new XMLSerializer().serializeToString(featureRequest));
+      // then post the request and add the received features to a layer
+		vectorSource.clear();
+		fetch('https://gs.gismart.ru/geoserver2/mainMap/ows', {
+			method: 'POST',
+			body: new XMLSerializer().serializeToString(featureRequest)
+		}).then(function(response) {
+			return response.json();
+		}).then(function(json) {
+			var features = new ol.format.GeoJSON().readFeatures(json);
+			vectorSource.addFeatures(features);
+			//put2gallery(features);
+			map.getView().fit(vectorSource.getExtent());
+		});
+	}
+	function displayFeatureInfo(pixel) {
+	
+		info.style.left = pixel[0] + 'px';
+		info.style.top = (pixel[1] - 50) + 'px';
+		
+		var features = [];
+		map.forEachFeatureAtPixel(pixel, function(feature, layer) {
+			if (typeof feature.get('item1') === 'undefined') {
+				if (typeof feature.get('NAME') === 'undefined') {
+				}else{
+					displayStatisticaInfo(feature)
+				}
+			} else {
+				features.push(feature);
+			}
+		});
+		if (features.length > 1) {
+			var text = [];
+			for (var i = 0, ii = features.length; i < ii; ++i) {
+				text.push(features[i].get('name'));
+			}
+			info.innerHTML = text.join('<br>');
+			info.style.display = 'block';
+			target.style.cursor = "pointer";
+		} else if (features.length == 1) {
+			if(features[0].c.indexOf("renovation") == 0 ){
+				$('#info').empty();
+				var label = $('<label class="filter-col" style="margin-right:0;"></label>');
+				label.text(features[0].get('name'));
+				var img = $('<img class="img-responsive"/>');
+				var metro = $('<label class="filter-metro"></label>');							
+				var builder = $('<label class="filter-builder"></label>');		
+				var price = $('<label class="filter-price"></label>');
+							
+				var address = $('<label class="filter-address"></label>');
+				address.text(features[0].get('address'));
+				$('#info').append(img).append(label).append($('<br>')).append(metro).append($('<br>')).append(builder).append($('<br>')).append(price).append($('<br>')).append(address);
+				info.style.display = 'block';
+				target.style.cursor = "pointer";
+			}else{
+				$('#info').empty();
+				var label = $('<label class="filter-col" style="margin-right:0;"></label>');
+				label.text(features[0].get('item2'));
+				var letter = $('<label class="filter-metro"></label>');
+				letter.text("Номер письма о подтверждении : "+features[0].get('item3'));
+				var promProduct = $('<label class="filter-address"></label>');
+				promProduct.text("Продукция : "+features[0].get('item4'));
+				$('#info').append(label).append(letter).append(promProduct);
+				/*$.get( "/api/realty?id=eq."+features[0].get('id'), function( data ) {
+					
+					var label = $('<label class="filter-col" style="margin-right:0;"></label>');
+					label.text(data[0].name);
+					var img = $('<img class="img-responsive"/>');
+					var metro = $('<label class="filter-metro"></label>');
+					metro.text(metromap[data[0].id_metro]);
+								
+					var builder = $('<label class="filter-builder"></label>');
+					builder.text(buildermap[data[0].id_builder]);
+							
+					var price = $('<label class="filter-price"></label>');
+					builder.text(range2price(data[0].pricerange));	
+							
+					var address = $('<label class="filter-address"></label>');
+					address.text(data[0].address);
+								
+					img.attr("src","http:"+data[0].image.split(' ')[0]);
+					$('#info').append(img).append(label).append($('<br>')).append(metro).append($('<br>')).append(builder).append($('<br>')).append(price).append($('<br>')).append(address);
+					//.append(mainDiv);
+							
+				}, "json" );*/
+				info.style.display = 'block';
+				target.style.cursor = "pointer";
+			}
+		} else {
+			info.style.display = 'none';
+			target.style.cursor = "";
+		}
+	}
+	info.style.display = 'none';
+	map.on('click', function(evt) {
+			if (evt.dragging) {
+				info.style.display = 'none';
+				return;
+			}
+			var pixel = map.getEventPixel(evt.originalEvent);
+			displayFeatureInfo(pixel);
+	});
+	var layerSwitcher = new ol.control.LayerSwitcher({
+		tipLabel: 'Легенда' // Optional label for button
+    });
+    map.addControl(layerSwitcher);
+    </script>
+	<div class="container">
+        <div class="row row-custom" id="gallery">
+            
+        </div>
+    </div>
+  
+  </body>
+</html>
