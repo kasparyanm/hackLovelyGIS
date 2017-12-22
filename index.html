@@ -282,11 +282,11 @@
         }),
         'MultiPolygon': new ol.style.Style({
           stroke: new ol.style.Stroke({
-            color: 'yellow',
+            color: 'rgba(115, 81, 63, 1)',
             width: 1
           }),
           fill: new ol.style.Fill({
-            color: 'rgba(255, 255, 0, 0.1)'
+            color: 'rgba(115, 81, 63, 0.1)'
           })
         }),
         'Polygon': new ol.style.Style({
@@ -504,6 +504,7 @@
 		console.log(new XMLSerializer().serializeToString(featureRequest));
       // then post the request and add the received features to a layer
 		vectorSource.clear();
+		vector2.setVisible(false);
 		fetch('https://gs.gismart.ru/geoserver2/mainMap/ows', {
 			method: 'POST',
 			body: new XMLSerializer().serializeToString(featureRequest)
@@ -535,8 +536,9 @@
 			filter: ol.format.filter.intersects('way', polygon, 'EPSG:3857')
 		});
 		console.log(new XMLSerializer().serializeToString(featureRequest));
-      // then post the request and add the received features to a layer
+      //then post the request and add the received features to a layer
 		vectorSource.clear();
+		drawingSource.clear();
 		fetch('https://gs.gismart.ru/geoserver2/mainMap/ows', {
 			method: 'POST',
 			body: new XMLSerializer().serializeToString(featureRequest)
@@ -546,7 +548,7 @@
 			var features = new ol.format.GeoJSON().readFeatures(json);
 			vectorSource.addFeatures(features);
 			//put2gallery(features);
-			map.getView().fit(vectorSource.getExtent());
+			//map.getView().fit(vectorSource.getExtent());
 		});
 	}
 	function displayFeatureInfo(pixel) {
